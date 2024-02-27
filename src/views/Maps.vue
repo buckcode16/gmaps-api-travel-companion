@@ -7,79 +7,109 @@
       <input id="pac-input" type="text" placeholder="Enter a location" />
     </div>
   </div>
-  <div id="map"></div>
-  <div id="details"></div>
+  <v-row
+    ><v-col cols="8"><div id="map"></div></v-col>
+    <v-col cols="4"
+      ><v-sheet v-if="selected" class="text-body-2 mx-auto" max-width="550">
+        <v-container fluid>
+          <v-row>
+            <v-col cols="12" class="mb-2">
+              <v-img
+                :src="
+                  selected.photos
+                    ? selected.photos[0].getUrl()
+                    : 'https://cdn.vuetifyjs.com/images/cards/road.jpg'
+                "
+                height="200"
+                cover
+              ></v-img>
+            </v-col>
+
+            <v-col cols="12">
+              <h2 class="text-h5 font-weight-black text-orange mb-4">
+                {{ selected.name }}
+              </h2>
+              <v-divider class="mx-4 mb-4"></v-divider>
+              <p class="mb-4">
+                {{ selected.vicinity }}
+              </p>
+              <v-row align="center" class="mx-0">
+                <v-rating
+                  :model-value="selected.rating"
+                  color="amber"
+                  density="compact"
+                  half-increments
+                  readonly
+                ></v-rating>
+
+                <div class="text-grey ms-4">{{ selected.rating }}</div>
+              </v-row>
+              <!-- <div class="px-4">
+                <v-chip-group>
+                  <v-chip>5:30PM</v-chip>
+
+                  <v-chip>7:30PM</v-chip>
+
+                  <v-chip>8:00PM</v-chip>
+
+                  <v-chip>9:00PM</v-chip>
+                </v-chip-group>
+              </div> -->
+            </v-col>
+          </v-row>
+        </v-container>
+      </v-sheet></v-col
+    ></v-row
+  >
+  <div id="details" v-show="false"></div>
   <div id="infowindow-content">
     <span id="place-name" class="title"></span><br />
     <span id="place-address"></span>
   </div>
   <div id="sidebar">
-    <h2>Results</h2>
+    <!-- <h2>Results</h2> -->
     <ul v-show="false" id="places"></ul>
-    <button id="more">Load more results</button>
+    <!-- <v-btn @click="loadResults" v-if="getNextPage">Load more results</v-btn> -->
   </div>
-  <v-card class="mx-auto">
-    <v-container fluid>
-      <v-row dense>
-        <v-col v-for="card in cards" :key="card.place_id" cols="3">
-          <v-card>
-            <v-img
-              :src="
-                card.photos
-                  ? card.photos[0].getUrl()
-                  : 'https://cdn.vuetifyjs.com/images/cards/road.jpg'
-              "
-              class="align-end"
-              gradient="to bottom, rgba(0,0,0,.1), rgba(0,0,0,.5)"
-              height="200px"
-              cover
-            >
-              <v-card-title class="text-white" v-text="card.name"></v-card-title>
-            </v-img>
-            {{ card.place_id }}
 
-            <v-card-actions>
-              <v-spacer></v-spacer>
-
-              <v-btn size="small" color="surface-variant" variant="text" icon="mdi-heart"></v-btn>
-
-              <v-btn
-                size="small"
-                color="surface-variant"
-                variant="text"
-                icon="mdi-bookmark"
-              ></v-btn>
-
-              <v-btn
-                size="small"
-                color="surface-variant"
-                variant="text"
-                icon="mdi-share-variant"
-              ></v-btn>
-            </v-card-actions>
-          </v-card>
-        </v-col>
-      </v-row>
-    </v-container>
-    <div class="text-center">
-      <v-pagination v-model="page" :length="4" rounded="circle"></v-pagination>
+  <div class="mt-2">
+    <div class="d-flex align-center">
+      <h2>Lodging</h2>
+      <v-icon class="text-black ml-4">mdi-bed</v-icon>
     </div>
-  </v-card>
+    <PlaceCards :cards="lodging" @center-location="centerLocation" />
+    <div class="d-flex align-center">
+      <h2>Restaurant</h2>
+      <v-icon class="text-black ml-4">mdi-silverware-fork-knife</v-icon>
+    </div>
+    <PlaceCards :cards="restaurant" @center-location="centerLocation" />
+    <div class="d-flex align-center">
+      <h2>Attractions</h2>
+      <v-icon class="text-black ml-4">mdi-ferris-wheel</v-icon>
+    </div>
+    <PlaceCards :cards="attraction" @center-location="centerLocation" />
+  </div>
 </template>
 
 <script setup lang="ts">
 import type { Ref } from 'vue'
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
+import PlaceCards from '../components/PlaceCards.vue'
 // This example requires the Places library. Include the libraries=places
 // parameter when you first load the API. For example:
 // <script src="https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY&libraries=places">
 
 const location = ref({ lat: 34.672374698079416, lng: 135.49908361513027 })
 const markers: Ref<google.maps.Marker[]> = ref([])
-const cards: Ref<google.maps.places.PlaceResult[]> = ref([])
+const lodging: Ref<google.maps.places.PlaceResult[]> = ref([])
+const restaurant: Ref<google.maps.places.PlaceResult[]> = ref([])
+const attraction: Ref<google.maps.places.PlaceResult[]> = ref([])
+const getNextPage: Ref<google.maps.places.PlaceSearchPagination> = ref()
+const selected: Ref<google.maps.places.PlaceResult> = ref(null)
+const map = ref(null)
 
 async function initMap(): void {
-  const map = new google.maps.Map(document.getElementById('map') as HTMLElement, {
+  map.value = await new google.maps.Map(document.getElementById('map') as HTMLElement, {
     center: location.value,
     zoom: 13
   })
@@ -91,52 +121,14 @@ async function initMap(): void {
     strictBounds: false
   }
 
-  map.controls[google.maps.ControlPosition.TOP_LEFT].push(card)
+  // map.controls[google.maps.ControlPosition.TOP_LEFT].push(card)
 
   const autocomplete = new google.maps.places.Autocomplete(input, options)
-
-  // Create the places service.
-  const service = new google.maps.places.PlacesService(map)
-
-  // Perform a nearby search.
-  service.nearbySearch(
-    { location: location.value, radius: 500, types: ['lodging', 'store'] },
-    (
-      results: google.maps.places.PlaceResult[] | null,
-      status: google.maps.places.PlacesServiceStatus,
-      pagination: google.maps.places.PlaceSearchPagination | null
-    ) => {
-      if (status !== 'OK' || !results) return
-
-      addPlaces(results, map)
-      moreButton.disabled = !pagination || !pagination.hasNextPage
-
-      cards.value = results
-
-      if (pagination && pagination.hasNextPage) {
-        getNextPage = () => {
-          // Note: nextPage will call the same handler function as the initial call
-          pagination.nextPage()
-        }
-      }
-    }
-  )
-
-  let getNextPage: () => void | false
-  const moreButton = document.getElementById('more') as HTMLButtonElement
-
-  moreButton.onclick = function () {
-    moreButton.disabled = true
-
-    if (getNextPage) {
-      getNextPage()
-    }
-  }
 
   // Bind the map's bounds (viewport) property to the autocomplete object,
   // so that the autocomplete requests use the current map bounds for the
   // bounds option in the request.
-  autocomplete.bindTo('bounds', map)
+  autocomplete.bindTo('bounds', map.value)
 
   const infowindow = new google.maps.InfoWindow()
   const infowindowContent = document.getElementById('infowindow-content') as HTMLElement
@@ -144,7 +136,7 @@ async function initMap(): void {
   infowindow.setContent(infowindowContent)
 
   const marker = new google.maps.Marker({
-    map,
+    map: map.value,
     anchorPoint: new google.maps.Point(0, -29),
     position: location.value
   })
@@ -152,31 +144,16 @@ async function initMap(): void {
   autocomplete.addListener('place_changed', () => {
     infowindow.close()
     marker.setVisible(false)
+    lodging.value = []
+    restaurant.value = []
+    attraction.value = []
 
     const place = autocomplete.getPlace()
 
-    // Perform a nearby search.
-    service.nearbySearch(
-      { location: place.geometry.location, radius: 500, type: 'store' },
-      (
-        results: google.maps.places.PlaceResult[] | null,
-        status: google.maps.places.PlacesServiceStatus,
-        pagination: google.maps.places.PlaceSearchPagination | null
-      ) => {
-        if (status !== 'OK' || !results) return
-
-        addPlaces(results, map)
-        moreButton.disabled = !pagination || !pagination.hasNextPage
-        cards.value = results
-
-        if (pagination && pagination.hasNextPage) {
-          getNextPage = () => {
-            // Note: nextPage will call the same handler function as the initial call
-            pagination.nextPage()
-          }
-        }
-      }
-    )
+    clearMarkers()
+    nearbySearch(map, place.geometry.location, ['lodging'], lodging)
+    nearbySearch(map, place.geometry.location, ['restaurant'], restaurant)
+    nearbySearch(map, place.geometry.location, ['tourist_attraction'], attraction)
     if (!place.geometry || !place.geometry.location) {
       // User entered the name of a Place that was not suggested and
       // pressed the Enter key, or the Place Details request failed.
@@ -186,27 +163,66 @@ async function initMap(): void {
 
     // If the place has a geometry, then present it on a map.
     if (place.geometry.viewport) {
-      map.fitBounds(place.geometry.viewport)
+      map.value.setCenter(place.geometry.location)
+      map.value.setZoom(17)
     } else {
-      map.setCenter(place.geometry.location)
-      map.setZoom(17)
+      map.value.setCenter(place.geometry.location)
+      map.value.setZoom(17)
     }
 
     marker.setPosition(place.geometry.location)
     marker.setVisible(true)
 
+    // Info marker after input is confirmed
     infowindowContent.children['place-name'].textContent = place.name
     infowindowContent.children['place-address'].textContent = place.formatted_address
-    infowindow.open(map, marker)
+    infowindow.open(map.value, marker)
   })
 }
 
-function addPlaces(places: google.maps.places.PlaceResult[], map: google.maps.Map) {
-  const placesList = document.getElementById('places') as HTMLElement
+function centerLocation(placeResult) {
+  map.value.setCenter(placeResult.geometry.location)
+  selected.value = placeResult
+}
 
-  // Clear the list every time addPlaces is called
-  placesList.innerHTML = ''
+function nearbySearch(
+  map: google.maps.Map,
+  location: google.maps.places.PlaceResult,
+  types: string[],
+  resultContainer: Ref<google.maps.places.PlaceResult[]>
+) {
+  const service = new google.maps.places.PlacesService(map.value)
 
+  // Perform a nearby search.
+  service.nearbySearch(
+    { location: location, radius: 400, types: types },
+    (
+      results: google.maps.places.PlaceResult[] | null,
+      status: google.maps.places.PlacesServiceStatus,
+      pagination: google.maps.places.PlaceSearchPagination | null
+    ) => {
+      if (status !== 'OK' || !results) return
+
+      addPlaces(results, map)
+      resultContainer.value = results
+
+      if (pagination && pagination.hasNextPage) {
+        getNextPage.value = () => {
+          // Note: nextPage will call the same handler function as the initial call
+          pagination.nextPage()
+        }
+      }
+    }
+  )
+}
+
+function loadResults() {
+  if (getNextPage.value) {
+    getNextPage.value()
+  }
+}
+
+function clearMarkers() {
   // Clear existing markers from the map
   markers.value.forEach((marker) => {
     marker.setVisible(false)
@@ -214,10 +230,11 @@ function addPlaces(places: google.maps.places.PlaceResult[], map: google.maps.Ma
   })
   // Clear the markers array
   markers.value = []
+}
 
+function addPlaces(places: google.maps.places.PlaceResult[], map: google.maps.Map) {
   for (const place of places) {
     if (place.geometry && place.geometry.location) {
-      console.log(place)
       const image = {
         url: place.icon!,
         size: new google.maps.Size(71, 71),
@@ -228,17 +245,18 @@ function addPlaces(places: google.maps.places.PlaceResult[], map: google.maps.Ma
 
       // Create a marker for each place
       const marker = new google.maps.Marker({
-        map,
+        map: map.value,
         icon: image,
         title: place.name!,
         position: place.geometry.location
       })
 
       marker.addListener('click', () => {
-        const contentString = `<div><h3>${place.name}</h3><p>${place.vicinity}</p><a href="https://www.google.com/maps/place/?q=place_id:${place.place_id}" target="_blank">View on Google Maps</a></div>`
+        const contentString = `${place}`
         const infowindow = new google.maps.InfoWindow({
           content: contentString
         })
+        selected.value = place
         let details = document.getElementById('details') as HTMLElement
         details.innerHTML = contentString
       })
@@ -260,14 +278,14 @@ function addPlaces(places: google.maps.places.PlaceResult[], map: google.maps.Ma
         li.appendChild(img)
       }
 
-      placesList.appendChild(li)
-
       li.addEventListener('click', () => {
         map.setCenter(place.geometry!.location!)
-        const contentString = `<div><h3>${place.name}</h3><p>${place.vicinity}</p><a href="https://www.google.com/maps/place/?q=place_id:${place.place_id}" target="_blank">View on Google Maps</a></div>`
+        const contentString = `${place}`
         const infowindow = new google.maps.InfoWindow({
           content: contentString
         })
+        selected.value = place
+        console.log(place)
         let details = document.getElementById('details') as HTMLElement
         details.innerHTML = contentString
 
@@ -283,8 +301,8 @@ declare global {
   }
 }
 
-onMounted(() => {
-  initMap()
+onMounted(async () => {
+  await initMap()
 })
 </script>
 
