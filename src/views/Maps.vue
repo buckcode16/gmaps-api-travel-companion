@@ -2,33 +2,6 @@
   <div class="pac-card" id="pac-card">
     <div>
       <div id="title">Autocomplete search</div>
-      <div id="type-selector" class="pac-controls">
-        <input type="radio" name="type" id="changetype-all" checked="checked" />
-        <label for="changetype-all">All</label>
-
-        <input type="radio" name="type" id="changetype-establishment" />
-        <label for="changetype-establishment">establishment</label>
-
-        <input type="radio" name="type" id="changetype-address" />
-        <label for="changetype-address">address</label>
-
-        <input type="radio" name="type" id="changetype-geocode" />
-        <label for="changetype-geocode">geocode</label>
-
-        <input type="radio" name="type" id="changetype-cities" />
-        <label for="changetype-cities">(cities)</label>
-
-        <input type="radio" name="type" id="changetype-regions" />
-        <label for="changetype-regions">(regions)</label>
-      </div>
-      <br />
-      <div id="strict-bounds-selector" class="pac-controls">
-        <input type="checkbox" id="use-location-bias" value="" checked />
-        <label for="use-location-bias">Bias to map viewport</label>
-
-        <input type="checkbox" id="use-strict-bounds" value="" />
-        <label for="use-strict-bounds">Strict bounds</label>
-      </div>
     </div>
     <div id="pac-container">
       <input id="pac-input" type="text" placeholder="Enter a location" />
@@ -42,20 +15,68 @@
   </div>
   <div id="sidebar">
     <h2>Results</h2>
-    <ul id="places"></ul>
+    <ul v-show="false" id="places"></ul>
     <button id="more">Load more results</button>
   </div>
+  <v-card class="mx-auto">
+    <v-container fluid>
+      <v-row dense>
+        <v-col v-for="card in cards" :key="card.place_id" cols="3">
+          <v-card>
+            <v-img
+              :src="
+                card.photos
+                  ? card.photos[0].getUrl()
+                  : 'https://cdn.vuetifyjs.com/images/cards/road.jpg'
+              "
+              class="align-end"
+              gradient="to bottom, rgba(0,0,0,.1), rgba(0,0,0,.5)"
+              height="200px"
+              cover
+            >
+              <v-card-title class="text-white" v-text="card.name"></v-card-title>
+            </v-img>
+            {{ card.place_id }}
+
+            <v-card-actions>
+              <v-spacer></v-spacer>
+
+              <v-btn size="small" color="surface-variant" variant="text" icon="mdi-heart"></v-btn>
+
+              <v-btn
+                size="small"
+                color="surface-variant"
+                variant="text"
+                icon="mdi-bookmark"
+              ></v-btn>
+
+              <v-btn
+                size="small"
+                color="surface-variant"
+                variant="text"
+                icon="mdi-share-variant"
+              ></v-btn>
+            </v-card-actions>
+          </v-card>
+        </v-col>
+      </v-row>
+    </v-container>
+    <div class="text-center">
+      <v-pagination v-model="page" :length="4" rounded="circle"></v-pagination>
+    </div>
+  </v-card>
 </template>
 
 <script setup lang="ts">
 import type { Ref } from 'vue'
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 // This example requires the Places library. Include the libraries=places
 // parameter when you first load the API. For example:
 // <script src="https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY&libraries=places">
 
 const location = ref({ lat: 34.672374698079416, lng: 135.49908361513027 })
 const markers: Ref<google.maps.Marker[]> = ref([])
+const cards: Ref<google.maps.places.PlaceResult[]> = ref([])
 
 async function initMap(): void {
   const map = new google.maps.Map(document.getElementById('map') as HTMLElement, {
@@ -65,8 +86,6 @@ async function initMap(): void {
 
   const card = document.getElementById('pac-card') as HTMLElement
   const input = document.getElementById('pac-input') as HTMLInputElement
-  const biasInputElement = document.getElementById('use-location-bias') as HTMLInputElement
-  const strictBoundsInputElement = document.getElementById('use-strict-bounds') as HTMLInputElement
   const options = {
     fields: ['formatted_address', 'geometry', 'name'],
     strictBounds: false
@@ -91,6 +110,8 @@ async function initMap(): void {
 
       addPlaces(results, map)
       moreButton.disabled = !pagination || !pagination.hasNextPage
+
+      cards.value = results
 
       if (pagination && pagination.hasNextPage) {
         getNextPage = () => {
@@ -146,6 +167,7 @@ async function initMap(): void {
 
         addPlaces(results, map)
         moreButton.disabled = !pagination || !pagination.hasNextPage
+        cards.value = results
 
         if (pagination && pagination.hasNextPage) {
           getNextPage = () => {
@@ -177,53 +199,6 @@ async function initMap(): void {
     infowindowContent.children['place-address'].textContent = place.formatted_address
     infowindow.open(map, marker)
   })
-
-  // Sets a listener on a radio button to change the filter type on Places
-  // Autocomplete.
-  function setupClickListener(id, types) {
-    const radioButton = document.getElementById(id) as HTMLInputElement
-
-    radioButton.addEventListener('click', () => {
-      autocomplete.setTypes(types)
-      input.value = ''
-    })
-  }
-
-  setupClickListener('changetype-all', [])
-  setupClickListener('changetype-address', ['address'])
-  setupClickListener('changetype-establishment', ['establishment'])
-  setupClickListener('changetype-geocode', ['geocode'])
-  setupClickListener('changetype-cities', ['(cities)'])
-  setupClickListener('changetype-regions', ['(regions)'])
-
-  biasInputElement.addEventListener('change', () => {
-    if (biasInputElement.checked) {
-      autocomplete.bindTo('bounds', map)
-    } else {
-      // User wants to turn off location bias, so three things need to happen:
-      // 1. Unbind from map
-      // 2. Reset the bounds to whole world
-      // 3. Uncheck the strict bounds checkbox UI (which also disables strict bounds)
-      autocomplete.unbind('bounds')
-      autocomplete.setBounds({ east: 180, west: -180, north: 90, south: -90 })
-      strictBoundsInputElement.checked = biasInputElement.checked
-    }
-
-    input.value = ''
-  })
-
-  strictBoundsInputElement.addEventListener('change', () => {
-    autocomplete.setOptions({
-      strictBounds: strictBoundsInputElement.checked
-    })
-
-    if (strictBoundsInputElement.checked) {
-      biasInputElement.checked = strictBoundsInputElement.checked
-      autocomplete.bindTo('bounds', map)
-    }
-
-    input.value = ''
-  })
 }
 
 function addPlaces(places: google.maps.places.PlaceResult[], map: google.maps.Map) {
@@ -242,7 +217,7 @@ function addPlaces(places: google.maps.places.PlaceResult[], map: google.maps.Ma
 
   for (const place of places) {
     if (place.geometry && place.geometry.location) {
-      console.log(place.types)
+      console.log(place)
       const image = {
         url: place.icon!,
         size: new google.maps.Size(71, 71),
@@ -307,7 +282,10 @@ declare global {
     initMap: () => void
   }
 }
-window.initMap = initMap
+
+onMounted(() => {
+  initMap()
+})
 </script>
 
 <style scoped>
@@ -349,6 +327,7 @@ body {
 }
 
 .pac-card {
+  /* visibility: hidden; */
   background-color: #fff;
   border: 0;
   border-radius: 2px;
@@ -364,17 +343,6 @@ body {
 #pac-container {
   padding-bottom: 12px;
   margin-right: 12px;
-}
-
-.pac-controls {
-  display: inline-block;
-  padding: 5px 11px;
-}
-
-.pac-controls label {
-  font-family: Roboto;
-  font-size: 13px;
-  font-weight: 300;
 }
 
 #pac-input {
