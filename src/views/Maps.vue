@@ -1,16 +1,16 @@
 <template>
-  <div class="pac-card" id="pac-card">
-    <div>
-      <div id="title">Autocomplete search</div>
-    </div>
-    <div id="pac-container">
-      <input id="pac-input" type="text" placeholder="Enter a location" />
-    </div>
-  </div>
-  <v-row
+  <v-row class="mt-4"
     ><v-col cols="8"><div id="map"></div></v-col>
     <v-col cols="4"
-      ><v-sheet v-if="selected" class="text-body-2 mx-auto" max-width="550">
+      ><div class="pac-card" id="pac-card">
+        <div>
+          <div id="title"><v-icon class="mr-2">mdi-magnify</v-icon>Autocomplete search</div>
+        </div>
+        <div id="pac-container">
+          <input id="pac-input" type="text" placeholder="Enter a location" />
+        </div>
+      </div>
+      <v-sheet v-if="selected" class="text-body-2 mx-auto mt-1" max-width="550">
         <v-container fluid>
           <v-row>
             <v-col cols="12" class="mb-2">
@@ -44,17 +44,6 @@
 
                 <div class="text-grey ms-4">{{ selected.rating }}</div>
               </v-row>
-              <!-- <div class="px-4">
-                <v-chip-group>
-                  <v-chip>5:30PM</v-chip>
-
-                  <v-chip>7:30PM</v-chip>
-
-                  <v-chip>8:00PM</v-chip>
-
-                  <v-chip>9:00PM</v-chip>
-                </v-chip-group>
-              </div> -->
             </v-col>
           </v-row>
         </v-container>
@@ -314,6 +303,7 @@ onMounted(async () => {
 #map {
   height: 400px;
   width: 100%;
+  border-radius: 1%;
 }
 
 /* 
@@ -347,14 +337,10 @@ body {
 .pac-card {
   /* visibility: hidden; */
   background-color: #fff;
-  border: 0;
-  border-radius: 2px;
-  box-shadow: 0 1px 4px -1px rgba(0, 0, 0, 0.3);
-  margin: 10px;
+  border: solid;
+  border-radius: 5px;
   padding: 0 0.5em;
-  font: 400 18px Roboto, Arial, sans-serif;
   overflow: hidden;
-  font-family: Roboto;
   padding: 0;
 }
 
@@ -368,10 +354,10 @@ body {
   font-family: Roboto;
   font-size: 15px;
   font-weight: 300;
-  margin-left: 12px;
+  margin: 12px;
   padding: 0 11px 0 13px;
   text-overflow: ellipsis;
-  width: 400px;
+  width: 300px;
 }
 
 #pac-input:focus {
@@ -380,8 +366,7 @@ body {
 
 #title {
   color: #fff;
-  background-color: #4d90fe;
-  font-size: 25px;
+  background-color: #000000;
   font-weight: 500;
   padding: 6px 12px;
 }

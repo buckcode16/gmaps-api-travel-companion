@@ -11,25 +11,27 @@
                   ? card.photos[0].getUrl()
                   : 'https://cdn.vuetifyjs.com/images/cards/road.jpg'
               "
-              class="align-end"
               gradient="to bottom, rgba(0,0,0,.1), rgba(0,0,0,.5)"
               height="200px"
               cover
             >
-              <v-card-title class="text-white" v-text="card.name"></v-card-title>
+              <div class="d-flex flex-row-reverse">
+                <v-btn
+                  class="text-none mr-2 mt-2"
+                  @click="handleLike(card)"
+                  color="white"
+                  variant="text"
+                  icon="mdi-heart"
+                ></v-btn>
+              </div>
+              <div class="top">
+                <v-card-title class="text-white mt-4" v-text="card.name"></v-card-title>
+              </div>
             </v-img>
 
             <v-card-actions>
               Rating: <v-badge :content="card.rating ? card.rating : '?'" inline></v-badge>
               <v-spacer></v-spacer>
-
-              <v-btn size="small" color="surface-variant" variant="text" icon="mdi-heart"></v-btn>
-              <v-btn
-                size="small"
-                color="surface-variant"
-                variant="text"
-                icon="mdi-bookmark"
-              ></v-btn>
 
               <v-btn
                 size="small"
@@ -70,9 +72,18 @@ const paginatedCards = computed(() => {
   return props.cards.slice(firstIndex, lastIndex)
 })
 
+function handleLike(card){
+  console.log(card.place_id);
+
+}
+
 function centerLocation(placeResult) {
     emit('centerLocation', placeResult)
 }
 </script>
 
-<style scoped></style>
+<style scoped>
+.top {
+  margin-top: 35%;
+}
+</style>

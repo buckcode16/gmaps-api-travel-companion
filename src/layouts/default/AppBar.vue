@@ -6,7 +6,7 @@ import AppLink from '@/components/AppLink.vue'
     <v-icon class="ml-2" icon="mdi-earth" />
     <v-toolbar-title>
       <router-link to="/" class="text-decoration-none text-black">
-        <span>Travel Companion</span>
+        <span>TRAVEL PAL</span>
       </router-link>
     </v-toolbar-title>
 
@@ -26,7 +26,9 @@ import AppLink from '@/components/AppLink.vue'
     </v-btn>
 
     <v-btn icon>
-      <v-icon>mdi-heart</v-icon>
+      <router-link to="/saved" class="text-decoration-none"
+        ><v-icon class="text-black">mdi-heart</v-icon>
+      </router-link>
     </v-btn>
 
     <v-btn icon id="profile-activator">
@@ -36,9 +38,12 @@ import AppLink from '@/components/AppLink.vue'
       <v-list>
         <v-list-item>
           <v-btn flat block><app-link to="/login">Login/Logout</app-link></v-btn>
-          <v-btn flat block><app-link to="/register">Profile</app-link></v-btn>
+          <v-btn flat block><app-link to="/register">Sign up</app-link></v-btn>
+          <v-btn flat block><app-link to="/profile">Profile</app-link></v-btn>
         </v-list-item>
       </v-list>
     </v-menu>
   </v-app-bar>
 </template>
+
+<style scoped></style>
