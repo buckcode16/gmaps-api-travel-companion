@@ -1,4 +1,5 @@
 import './assets/main.css'
+import axios from 'axios'
 
 import { createApp } from 'vue'
 import { createPinia } from 'pinia'
@@ -12,6 +13,7 @@ import { createVuetify } from 'vuetify'
 import * as components from 'vuetify/components'
 import * as directives from 'vuetify/directives'
 
+axios.defaults.withCredentials = true
 const vuetify = createVuetify({
   components,
   directives

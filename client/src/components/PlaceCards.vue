@@ -1,5 +1,5 @@
 <template>
-  <v-card class="mx-auto mb-6" flat>
+  <v-card class="mx-auto mb-6" flat color="yellow-lighten-4">
     <v-container fluid>
       <v-row dense>
         <v-col v-for="card in paginatedCards" :key="card.place_id" cols="3">
@@ -18,8 +18,8 @@
               <div class="d-flex flex-row-reverse">
                 <v-btn
                   class="text-none mr-2 mt-2"
-                  @click.stop="handleLike(card)"
-                  color="white"
+                  @click.stop="isSaved(card.place_id) ? removePlaceId(card) : addPlaceId(card)"
+                  :color="isSaved(card.place_id) ? 'pink' : 'white'"
                   variant="text"
                   icon="mdi-heart"
                 ></v-btn>
@@ -51,7 +51,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, defineProps, type PropType, defineEmits } from 'vue'
+import { ref, computed, defineProps, type PropType, defineEmits, onMounted } from 'vue'
 import axios from 'axios';
 
 const emit = defineEmits(['centerLocation'])
@@ -73,32 +73,65 @@ const paginatedCards = computed(() => {
   return props.cards.slice(firstIndex, lastIndex)
 })
 
-async function handleLike(card){
+const savedPlaceIds = ref([]);
+
+const isSaved = (place_id) => {
+  return savedPlaceIds.value.some(card => card.place_id === place_id);
+};
+
+const getPlaceIds = async () => {
+  if(!window.localStorage.getItem('user')) return
   try {
-  const response = await axios.get(
-  "http://localhost:3000/"
-  )
-
-  console.log(response.data)
-
-  } catch (err) {
-
+    const response = await axios.get('http://localhost:3000/api/place', { withCredentials: true });
+    savedPlaceIds.value = response.data;
+    console.log('Place IDs:', response.data);
+  } catch (error) {
+    console.error('Error retrieving place IDs:', error.response?.data || error);
   }
-  // console.log(card.place_id);
-  // const userString = window.localStorage.getItem('user')
+};
 
-  // const user = JSON.parse(userString)
+const addPlaceId = async (card) => {
+  if(!window.localStorage.getItem('user')) return
+  try {
+    let modifiedCard = { ...card };
 
-  // user.liked.push(card.place_id)
+    if (Array.isArray(card.photos) && card.photos.length > 0) {
+      modifiedCard.photos = card.photos.map(photo =>
+        photo.getUrl({maxWidth: 400})
+      );
+    }
 
-  // window.localStorage.setItem('user', JSON.stringify(user))
+    await axios.post('http://localhost:3000/api/place/add', modifiedCard, { withCredentials: true });
+    console.log('Place added:', modifiedCard);
+
+    savedPlaceIds.value.push(modifiedCard);
+  } catch (error) {
+    console.error('Error adding place:', error.response?.data || error);
+  }
+};
 
 
-}
+const removePlaceId = async (card) => {
+  try {
+    await axios.delete('http://localhost:3000/api/place/remove', {
+      data: { placeId: card.place_id },
+      withCredentials: true,
+    });
+    console.log('Place removed:', card.place_id);
+    savedPlaceIds.value = savedPlaceIds.value.filter(item => item.place_id !== card.place_id);
+  } catch (error) {
+    console.error('Error removing place:', error.response?.data || error);
+  }
+};
+
 
 function centerLocation(placeResult) {
     emit('centerLocation', placeResult)
 }
+
+onMounted(() => {
+  getPlaceIds()
+})
 </script>
 
 <style scoped>

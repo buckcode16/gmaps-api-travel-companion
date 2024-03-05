@@ -10,7 +10,12 @@
           <input id="pac-input" type="text" placeholder="Enter a location" />
         </div>
       </div>
-      <v-sheet v-if="selected" class="text-body-2 mx-auto mt-1" max-width="550">
+      <v-sheet
+        v-if="selected"
+        class="text-body-2 mx-auto mt-1 rounded bg-yellow-lighten-4"
+        border-color="black"
+        max-width="550"
+      >
         <v-container fluid>
           <v-row>
             <v-col cols="12" class="mb-2">
@@ -88,7 +93,7 @@ import PlaceCards from '../components/PlaceCards.vue'
 // parameter when you first load the API. For example:
 // <script src="https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY&libraries=places">
 
-const location = ref({ lat: 34.672374698079416, lng: 135.49908361513027 })
+const location = ref({ lat: 3.149119138683123, lng: 101.7130470300968 })
 const markers: Ref<google.maps.Marker[]> = ref([])
 const lodging: Ref<google.maps.places.PlaceResult[]> = ref([])
 const restaurant: Ref<google.maps.places.PlaceResult[]> = ref([])
@@ -304,6 +309,7 @@ onMounted(async () => {
   height: 400px;
   width: 100%;
   border-radius: 1%;
+  box-shadow: 10px 10px 5px;
 }
 
 /* 
