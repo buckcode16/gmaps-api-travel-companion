@@ -1,5 +1,5 @@
 <template>
-  <v-card class="mx-auto mb-6" flat color="yellow-lighten-4">
+  <v-card class="mx-auto mb-6 box-cards" flat>
     <v-container fluid>
       <v-row dense>
         <v-col v-for="card in paginatedCards" :key="card.place_id" cols="3">
@@ -137,5 +137,10 @@ onMounted(() => {
 <style scoped>
 .top {
   margin-top: 35%;
+}
+
+.box-cards {
+  border-radius: 1%;
+  box-shadow: 5px 5px 5px;
 }
 </style>

@@ -3,7 +3,6 @@ import { hashPassword } from '../utils/helpers.mjs'
 import { User } from '../mongoose/schemas/user.mjs'
 
 export const createUserHandler = async (request, response) => {
-  console.log(request.body)
   const result = validationResult(request)
   if (!result.isEmpty()) return response.status(400).send(result.array())
   const data = matchedData(request)

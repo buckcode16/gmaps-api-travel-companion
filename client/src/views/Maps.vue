@@ -12,7 +12,7 @@
       </div>
       <v-sheet
         v-if="selected"
-        class="text-body-2 mx-auto mt-1 rounded bg-yellow-lighten-4"
+        class="text-body-2 mx-auto mt-1 rounded bg-yellow-lighten-4 box"
         border-color="black"
         max-width="550"
       >
@@ -67,21 +67,29 @@
   </div>
 
   <div class="mt-2">
-    <div class="d-flex align-center">
+    <div v-if="lodging.length > 0" class="d-flex align-center">
       <h2>Lodging</h2>
       <v-icon class="text-black ml-4">mdi-bed</v-icon>
     </div>
-    <PlaceCards :cards="lodging" @center-location="centerLocation" />
-    <div class="d-flex align-center">
+    <PlaceCards v-if="lodging.length > 0" :cards="lodging" @center-location="centerLocation" />
+    <div v-if="restaurant.length > 0" class="d-flex align-center">
       <h2>Restaurant</h2>
       <v-icon class="text-black ml-4">mdi-silverware-fork-knife</v-icon>
     </div>
-    <PlaceCards :cards="restaurant" @center-location="centerLocation" />
-    <div class="d-flex align-center">
+    <PlaceCards
+      v-if="restaurant.length > 0"
+      :cards="restaurant"
+      @center-location="centerLocation"
+    />
+    <div v-if="attraction.length > 0" class="d-flex align-center">
       <h2>Attractions</h2>
       <v-icon class="text-black ml-4">mdi-ferris-wheel</v-icon>
     </div>
-    <PlaceCards :cards="attraction" @center-location="centerLocation" />
+    <PlaceCards
+      v-if="attraction.length > 0"
+      :cards="attraction"
+      @center-location="centerLocation"
+    />
   </div>
 </template>
 
@@ -375,5 +383,10 @@ body {
   background-color: #000000;
   font-weight: 500;
   padding: 6px 12px;
+}
+
+.box {
+  border-radius: 1%;
+  box-shadow: 5px 5px 5px;
 }
 </style>
